@@ -62,7 +62,17 @@ db.exec(`
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     url TEXT NOT NULL,
+    group_name TEXT DEFAULT '默认',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS room_backgrounds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    room_id INTEGER REFERENCES rooms(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    image_url TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(room_id, user_id)
   );
 `);
 
@@ -231,17 +241,30 @@ export function saveMessage(roomId, userId, content) {
   `).get(info.lastInsertRowid);
 }
 
-export function saveCustomEmoji(userId, name, url) {
+export function saveCustomEmoji(userId, name, url, groupName) {
   const info = db.prepare(
-    `INSERT INTO custom_emojis (user_id, name, url) VALUES (?, ?, ?)`
-  ).run(userId, name, url);
+    `INSERT INTO custom_emojis (user_id, name, url, group_name) VALUES (?, ?, ?, ?)`
+  ).run(userId, name, url, groupName || '默认');
   return db.prepare(`SELECT * FROM custom_emojis WHERE id = ?`).get(info.lastInsertRowid);
 }
 
 export function getCustomEmojis(userId) {
   return db.prepare(
-    `SELECT id, name, url, created_at AS createdAt FROM custom_emojis WHERE user_id = ? ORDER BY created_at DESC`
+    `SELECT id, name, url, group_name AS groupName, created_at AS createdAt FROM custom_emojis WHERE user_id = ? ORDER BY group_name, created_at DESC`
   ).all(userId);
+}
+
+export function getCustomEmojiGroups(userId) {
+  return db.prepare(
+    `SELECT group_name AS groupName, COUNT(*) as count FROM custom_emojis WHERE user_id = ? GROUP BY group_name ORDER BY group_name`
+  ).all(userId);
+}
+
+export function updateCustomEmojiGroup(id, userId, groupName) {
+  const info = db.prepare(
+    `UPDATE custom_emojis SET group_name = ? WHERE id = ? AND user_id = ?`
+  ).run(groupName, id, userId);
+  return info.changes > 0;
 }
 
 export function deleteCustomEmoji(id, userId) {
@@ -249,6 +272,34 @@ export function deleteCustomEmoji(id, userId) {
     `DELETE FROM custom_emojis WHERE id = ? AND user_id = ?`
   ).run(id, userId);
   return info.changes > 0;
+}
+
+// ── Room background helpers ──
+export function setRoomBackground(roomId, userId, imageUrl) {
+  db.prepare(
+    `INSERT INTO room_backgrounds (room_id, user_id, image_url) VALUES (?, ?, ?)
+     ON CONFLICT(room_id, user_id) DO UPDATE SET image_url = excluded.image_url`
+  ).run(roomId, userId, imageUrl);
+  return { roomId, userId, imageUrl };
+}
+
+export function getRoomBackground(roomId, userId) {
+  return db.prepare(
+    `SELECT image_url AS imageUrl FROM room_backgrounds WHERE room_id = ? AND user_id = ?`
+  ).get(roomId, userId);
+}
+
+export function deleteRoomBackground(roomId, userId) {
+  const info = db.prepare(
+    `DELETE FROM room_backgrounds WHERE room_id = ? AND user_id = ?`
+  ).run(roomId, userId);
+  return info.changes > 0;
+}
+
+export function getAllRoomBackgrounds(roomId) {
+  return db.prepare(
+    `SELECT user_id AS userId, image_url AS imageUrl FROM room_backgrounds WHERE room_id = ?`
+  ).all(roomId);
 }
 
 // ── Private message helpers ──

@@ -2,15 +2,40 @@ import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import multer from 'multer';
 import { authMiddleware } from '../middleware/auth.js';
-import { saveCustomEmoji, getCustomEmojis, deleteCustomEmoji } from '../db.js';
+import {
+  saveCustomEmoji, getCustomEmojis, getCustomEmojiGroups,
+  updateCustomEmojiGroup, deleteCustomEmoji,
+  setRoomBackground, getRoomBackground, deleteRoomBackground,
+  getAllRoomBackgrounds
+} from '../db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const emojiDir = path.join(__dirname, '..', '..', 'server', 'emoji');
+const uploadDir = path.join(__dirname, '..', '..', 'data', 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
 const router = Router();
 
-// ── Helpers ──
+// ── File upload config ──
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.png';
+    cb(null, `bg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
+  }
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('只能上传图片文件'));
+  }
+});
+
+// ── Emoji pack helpers ──
 
 function getPackFiles() {
   if (!fs.existsSync(emojiDir)) return [];
@@ -49,9 +74,8 @@ function normalizePack(data) {
   return categories;
 }
 
-// ── Routes ──
+// ── Built-in packs ──
 
-// GET /api/emoji/packs - List all packs with full emoji data
 router.get('/packs', (req, res) => {
   try {
     const files = getPackFiles();
@@ -59,7 +83,6 @@ router.get('/packs', (req, res) => {
       const data = readPack(filename);
       const id = filename.replace('.json', '');
       const categories = normalizePack(data);
-      // Flatten all emojis from all categories into a single array
       const emojis = [];
       for (const [catName, stickers] of Object.entries(categories)) {
         for (const sticker of stickers) {
@@ -75,12 +98,10 @@ router.get('/packs', (req, res) => {
   }
 });
 
-// GET /api/emoji/packs/:packName - Get stickers in a specific pack by category
 router.get('/packs/:packName', (req, res) => {
   try {
     const { packName } = req.params;
-    const filename = `${packName}.json`;
-    const data = readPack(filename);
+    const data = readPack(`${packName}.json`);
     if (!data) return res.status(404).json({ error: 'Pack not found' });
     const categories = normalizePack(data);
     res.json({ pack: packName, categories });
@@ -89,33 +110,89 @@ router.get('/packs/:packName', (req, res) => {
   }
 });
 
-// POST /api/emoji/custom - Upload custom sticker
+// ── Custom emojis (grouped) ──
+
+router.get('/custom', authMiddleware, (req, res) => {
+  const emojis = getCustomEmojis(req.user.id);
+  const groups = getCustomEmojiGroups(req.user.id);
+  // Group emojis by group_name
+  const grouped = {};
+  for (const e of emojis) {
+    if (!grouped[e.groupName]) grouped[e.groupName] = [];
+    grouped[e.groupName].push(e);
+  }
+  res.json({ emojis: grouped, groups });
+});
+
 router.post('/custom', authMiddleware, (req, res) => {
   try {
-    const { name, url } = req.body;
+    const { name, url, groupName } = req.body;
     if (!name || !url) return res.status(400).json({ error: 'name and url are required' });
-    const emoji = saveCustomEmoji(req.user.id, name, url);
+    const emoji = saveCustomEmoji(req.user.id, name, url, groupName);
     res.status(201).json({ emoji });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/emoji/custom - Get user's custom stickers
-router.get('/custom', authMiddleware, (req, res) => {
-  const emojis = getCustomEmojis(req.user.id);
-  res.json({ emojis });
+router.patch('/custom/:id/group', authMiddleware, (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { groupName } = req.body;
+    if (!groupName) return res.status(400).json({ error: 'groupName is required' });
+    const ok = updateCustomEmojiGroup(id, req.user.id, groupName);
+    if (ok) res.json({ success: true });
+    else res.status(404).json({ error: 'Not found' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// DELETE /api/emoji/custom/:id - Delete custom sticker
 router.delete('/custom/:id', authMiddleware, (req, res) => {
   const id = parseInt(req.params.id);
   const result = deleteCustomEmoji(id, req.user.id);
-  if (result) {
-    res.json({ success: true });
-  } else {
-    res.status(404).json({ error: 'Sticker not found or not yours' });
+  if (result) res.json({ success: true });
+  else res.status(404).json({ error: 'Not found' });
+});
+
+// ── Room backgrounds ──
+
+router.get('/background/:roomId', authMiddleware, (req, res) => {
+  const roomId = parseInt(req.params.roomId);
+  const bg = getRoomBackground(roomId, req.user.id);
+  res.json({ background: bg || null });
+});
+
+router.get('/background/:roomId/all', authMiddleware, (req, res) => {
+  const roomId = parseInt(req.params.roomId);
+  const bgs = getAllRoomBackgrounds(roomId);
+  res.json({ backgrounds: bgs });
+});
+
+router.post('/background/:roomId', authMiddleware, upload.single('image'), (req, res) => {
+  try {
+    const roomId = parseInt(req.params.roomId);
+    if (!req.file) return res.status(400).json({ error: '请选择图片' });
+    const imageUrl = `/api/emoji/upload/${req.file.filename}`;
+    const bg = setRoomBackground(roomId, req.user.id, imageUrl);
+    res.status(201).json({ background: bg });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+});
+
+router.delete('/background/:roomId', authMiddleware, (req, res) => {
+  const roomId = parseInt(req.params.roomId);
+  const result = deleteRoomBackground(roomId, req.user.id);
+  if (result) res.json({ success: true });
+  else res.status(404).json({ error: 'No background set' });
+});
+
+// Serve uploaded files
+router.get('/upload/:filename', (req, res) => {
+  const filepath = path.join(uploadDir, req.params.filename);
+  if (!fs.existsSync(filepath)) return res.status(404).json({ error: 'Not found' });
+  res.sendFile(filepath);
 });
 
 export default router;

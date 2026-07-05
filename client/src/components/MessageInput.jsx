@@ -72,7 +72,7 @@ export default function MessageInput({ roomId, socket }) {
   };
 
   return (
-    <div className="p-4 border-t border-gray-800 bg-gray-900/50">
+    <div className="p-4 border-t border-gray-800 bg-gray-900/70 backdrop-blur-sm relative z-10">
       {/* Emoji picker */}
       <div className="relative">
         <EmojiPicker

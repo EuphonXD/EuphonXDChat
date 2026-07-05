@@ -40,3 +40,11 @@ export async function apiPut(path, body) {
   });
   return handleResponse(res);
 }
+
+export async function apiDelete(path) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  return handleResponse(res);
+}

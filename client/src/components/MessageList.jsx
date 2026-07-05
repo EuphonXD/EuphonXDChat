@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { apiGet } from '../utils/api';
+import { apiGet, apiPost, apiDelete } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
 import { format } from 'date-fns';
+import { Image, X } from 'lucide-react';
 
-export default function MessageList({ roomId }) {
+export default function MessageList({ roomId, onBackgroundChange }) {
   const { user } = useAuth();
   const { socket } = useSocket();
   const [messages, setMessages] = useState([]);
@@ -14,6 +15,20 @@ export default function MessageList({ roomId }) {
   const messagesEndRef = useRef(null);
   const containerRef = useRef(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [bgUrl, setBgUrl] = useState(null);
+  const [showBgMenu, setShowBgMenu] = useState(false);
+  const bgInputRef = useRef(null);
+
+  // Load room background
+  useEffect(() => {
+    if (!roomId) return;
+    apiGet(`/emoji/background/${roomId}`)
+      .then((data) => {
+        setBgUrl(data.background?.imageUrl || null);
+        if (onBackgroundChange) onBackgroundChange(data.background?.imageUrl || null);
+      })
+      .catch(() => {});
+  }, [roomId]);
 
   useEffect(() => {
     setMessages([]);
@@ -132,6 +147,40 @@ export default function MessageList({ roomId }) {
     return prev.toDateString() !== curr.toDateString();
   };
 
+  const handleBgUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/emoji/background/${roomId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.background) {
+        setBgUrl(data.background.imageUrl);
+        if (onBackgroundChange) onBackgroundChange(data.background.imageUrl);
+      }
+    } catch (err) {
+      console.error('Failed to upload background:', err);
+    }
+    setShowBgMenu(false);
+  };
+
+  const handleBgDelete = async () => {
+    try {
+      await apiDelete(`/emoji/background/${roomId}`);
+      setBgUrl(null);
+      if (onBackgroundChange) onBackgroundChange(null);
+    } catch (err) {
+      console.error('Failed to delete background:', err);
+    }
+    setShowBgMenu(false);
+  };
+
   const groups = groupMessages(messages);
 
   if (loading) {
@@ -146,8 +195,49 @@ export default function MessageList({ roomId }) {
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto px-2 sm:px-4 py-2"
+      className="flex-1 overflow-y-auto px-2 sm:px-4 py-2 relative"
+      style={bgUrl ? { backgroundImage: `url(${bgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' } : {}}
     >
+      {/* Background overlay */}
+      {bgUrl && <div className="fixed inset-0 bg-black/40 pointer-events-none z-0" />}
+
+      {/* Background settings button */}
+      <div className="fixed bottom-20 right-4 z-30">
+        <div className="relative">
+          <button
+            onClick={() => setShowBgMenu(!showBgMenu)}
+            className="w-9 h-9 rounded-full bg-gray-800/80 hover:bg-gray-700/80 flex items-center justify-center transition-colors border border-gray-700"
+            title="设置聊天背景"
+          >
+            <Image className="w-4 h-4 text-gray-400" />
+          </button>
+          {showBgMenu && (
+            <div className="absolute bottom-full right-0 mb-2 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-3 min-w-[180px]">
+              <button
+                onClick={() => bgInputRef.current?.click()}
+                className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-200 hover:bg-gray-700 transition-colors"
+              >
+                📷 上传背景图
+              </button>
+              {bgUrl && (
+                <button
+                  onClick={handleBgDelete}
+                  className="w-full text-left px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-gray-700 transition-colors"
+                >
+                  🗑️ 移除背景
+                </button>
+              )}
+              <input
+                ref={bgInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleBgUpload}
+              />
+            </div>
+          )}
+        </div>
+      </div>
       {loadingMore && (
         <div className="text-center py-2">
           <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400"></div>
@@ -162,7 +252,7 @@ export default function MessageList({ roomId }) {
           </div>
         </div>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-1 relative z-10">
           {messages.map((msg, idx) => {
             const showDate = shouldShowDateSeparator(msg, idx);
             const isOwn = msg.userId === user.id;
