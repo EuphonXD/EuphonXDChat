@@ -1111,4 +1111,76 @@
 			},
 			{
 				"text": "Heybox-怒",
-				"icon": "<img src='https://jsd.anxy.top/gh/shan
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_nu.png'>"
+			},
+			{
+				"text": "Heybox-喷水",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_penshui.png'>"
+			},
+			{
+				"text": "Heybox-凄凉",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_qiliang.png'>"
+			},
+			{
+				"text": "Heybox-生气",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_shengqi.png'>"
+			},
+			{
+				"text": "Heybox-睡觉",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_shuijiao.png'>"
+			},
+			{
+				"text": "Heybox-叹气",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_tanqi.png'>"
+			},
+			{
+				"text": "Heybox-摊手",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_tanshou.png'>"
+			},
+			{
+				"text": "Heybox-吐",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_tu.png'>"
+			},
+			{
+				"text": "Heybox-哇",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_wa.png'>"
+			},
+			{
+				"text": "Heybox-委屈",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_weiqu.png'>"
+			},
+			{
+				"text": "Heybox-微笑",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_weixiao.png'>"
+			},
+			{
+				"text": "Heybox-捂脸哭",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_wulianku.png'>"
+			},
+			{
+				"text": "Heybox-吓",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_xia.png'>"
+			},
+			{
+				"text": "Heybox-笑哭",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_xiaocry.png'>"
+			},
+			{
+				"text": "Heybox-喜欢",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_xihuan.png'>"
+			},
+			{
+				"text": "Heybox-学习",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_xuexi.png'>"
+			},
+			{
+				"text": "Heybox-晕",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_yun.png'>"
+			},
+			{
+				"text": "Heybox-赞",
+				"icon": "<img src='https://jsd.anxy.top/gh/shangskr/owo/heybox/Heybox-cube_zan.png'>"
+			}
+		]
+	}
+}
