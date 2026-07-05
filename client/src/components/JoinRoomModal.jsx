@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { apiPost } from '../utils/api';
-import { X, Hash, Lock } from 'lucide-react';
+import { X, LogIn, Hash, Lock } from 'lucide-react';
 
-export default function CreateRoomModal({ onClose, onCreated }) {
+export default function JoinRoomModal({ onClose, onJoined }) {
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,12 +24,11 @@ export default function CreateRoomModal({ onClose, onCreated }) {
     try {
       setLoading(true);
       setError('');
-      const data = await apiPost('/rooms', {
+      const data = await apiPost('/rooms/join', {
         name: trimmedName,
-        description: description.trim(),
         password: password || undefined,
       });
-      onCreated(data.room);
+      onJoined(data.room);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -46,10 +44,10 @@ export default function CreateRoomModal({ onClose, onCreated }) {
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-indigo-600/20 flex items-center justify-center">
-              <Hash className="w-5 h-5 text-indigo-400" />
+            <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
+              <LogIn className="w-5 h-5 text-gray-300" />
             </div>
-            <h2 className="text-lg font-semibold text-white">创建聊天室</h2>
+            <h2 className="text-lg font-semibold text-white">加入聊天室</h2>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
             <X className="w-5 h-5" />
@@ -67,47 +65,35 @@ export default function CreateRoomModal({ onClose, onCreated }) {
             <label className="block text-sm font-medium text-gray-400 mb-1.5">
               聊天室名称 <span className="text-red-400">*</span>
             </label>
-            <input
-              ref={inputRef}
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="input-dark"
-              placeholder="例如：综合、游戏、音乐"
-              maxLength={50}
-              required
-            />
+            <div className="relative">
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-dark pl-10"
+                placeholder="输入精确的聊天室名称"
+                maxLength={50}
+                required
+              />
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1.5">
-              描述
+              密码
             </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="input-dark resize-none"
-              placeholder="这个聊天室是关于什么的？"
-              rows={3}
-              maxLength={200}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1.5">
-              <div className="flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5" />
-                访问密码
-                <span className="text-xs text-gray-600">（可选）</span>
-              </div>
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-dark"
-              placeholder="设置密码可保护聊天室隐私"
-            />
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-dark pl-10"
+                placeholder="如果聊天室有密码请输入"
+              />
+            </div>
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -122,7 +108,7 @@ export default function CreateRoomModal({ onClose, onCreated }) {
               {loading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto"></div>
               ) : (
-                '创建聊天室'
+                '加入'
               )}
             </button>
           </div>

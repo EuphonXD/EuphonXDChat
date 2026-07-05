@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import bcrypt from 'bcryptjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -23,8 +24,9 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS rooms (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
+    name TEXT UNIQUE NOT NULL,
     description TEXT DEFAULT '',
+    password_hash TEXT,
     creator_id INTEGER REFERENCES users(id),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -86,33 +88,68 @@ export function updateProfile(userId, { nickname, avatar }) {
 }
 
 // ── Room helpers ──
-export function createRoom(name, description, creatorId) {
+export function createRoom(name, description, creatorId, password) {
+  const passwordHash = password ? bcrypt.hashSync(password, 10) : null;
   const insert = db.prepare(
-    `INSERT INTO rooms (name, description, creator_id) VALUES (?, ?, ?)`
+    `INSERT INTO rooms (name, description, creator_id, password_hash) VALUES (?, ?, ?, ?)`
   );
-  const info = insert.run(name, description || '', creatorId);
+  const info = insert.run(name, description || '', creatorId, passwordHash);
   db.prepare(
     `INSERT INTO room_members (room_id, user_id) VALUES (?, ?)`
   ).run(info.lastInsertRowid, creatorId);
-  return db.prepare(`SELECT * FROM rooms WHERE id = ?`).get(info.lastInsertRowid);
+  return db.prepare(`SELECT id, name, description, creator_id, created_at FROM rooms WHERE id = ?`).get(info.lastInsertRowid);
 }
 
+// Only return rooms the user is a member of
 export function getRooms(userId) {
   const rows = db.prepare(`
-    SELECT r.id, r.name, r.description,
-      (SELECT COUNT(*) FROM room_members WHERE room_id = r.id) AS memberCount,
-      (SELECT COUNT(*) FROM room_members WHERE room_id = r.id AND user_id = ?) AS isMember
+    SELECT r.id, r.name, r.description, r.password_hash,
+      (SELECT COUNT(*) FROM room_members WHERE room_id = r.id) AS memberCount
     FROM rooms r
+    JOIN room_members rm ON r.id = rm.room_id
+    WHERE rm.user_id = ?
     ORDER BY r.created_at DESC
   `).all(userId);
-  return rows.map(r => ({ ...r, isMember: r.isMember > 0 }));
+  return rows.map(r => ({
+    id: r.id,
+    name: r.name,
+    description: r.description,
+    hasPassword: !!r.password_hash,
+    memberCount: r.memberCount,
+  }));
 }
 
-export function joinRoom(roomId, userId) {
-  try {
-    db.prepare(`INSERT OR IGNORE INTO room_members (room_id, user_id) VALUES (?, ?)`).run(roomId, userId);
-    return true;
-  } catch { return false; }
+export function findRoomByName(name) {
+  return db.prepare(`SELECT id, name, description, password_hash FROM rooms WHERE name = ?`).get(name);
+}
+
+export function findRoomById(id) {
+  return db.prepare(`SELECT id, name, description, password_hash, creator_id FROM rooms WHERE id = ?`).get(id);
+}
+
+export function joinRoomWithPassword(roomId, userId, password) {
+  const room = findRoomById(roomId);
+  if (!room) return { error: '聊天室不存在' };
+  if (isRoomMember(roomId, userId)) return { ok: true };
+  if (room.password_hash) {
+    if (!password) return { error: '该聊天室需要密码' };
+    if (!bcrypt.compareSync(password, room.password_hash)) return { error: '密码错误' };
+  }
+  db.prepare(`INSERT OR IGNORE INTO room_members (room_id, user_id) VALUES (?, ?)`).run(roomId, userId);
+  return { ok: true };
+}
+
+export function joinRoomByName(name, userId, password) {
+  const room = findRoomByName(name);
+  if (!room) return { error: '聊天室不存在' };
+  return joinRoomWithPassword(room.id, userId, password);
+}
+
+export function inviteToRoom(roomId, inviterId, inviteeId) {
+  if (!isRoomMember(roomId, inviterId)) return { error: '你不是该聊天室的成员' };
+  if (isRoomMember(roomId, inviteeId)) return { ok: true, message: '该用户已是成员' };
+  db.prepare(`INSERT OR IGNORE INTO room_members (room_id, user_id) VALUES (?, ?)`).run(roomId, inviteeId);
+  return { ok: true };
 }
 
 export function leaveRoom(roomId, userId) {
@@ -134,6 +171,16 @@ export function isRoomMember(roomId, userId) {
     `SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?`
   ).get(roomId, userId);
   return !!row;
+}
+
+// Search users by username or nickname (for inviting)
+export function searchUsers(query, excludeUserId) {
+  return db.prepare(`
+    SELECT id, username, nickname, avatar
+    FROM users
+    WHERE (username LIKE ? OR nickname LIKE ?) AND id != ?
+    LIMIT 10
+  `).all(`%${query}%`, `%${query}%`, excludeUserId);
 }
 
 // ── Message helpers ──
@@ -209,7 +256,6 @@ export function getPrivateMessages(userId, otherUserId, limit = 50, before) {
 }
 
 export function getPrivateConversations(userId) {
-  // Get all users the current user has messaged with, plus the last message
   const rows = db.prepare(`
     SELECT
       CASE

@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiGet, apiPost } from '../utils/api';
-import { Hash, Plus, LogOut, User, Compass, MessageCircle, X } from 'lucide-react';
+import { Hash, Plus, LogOut, User, LogIn, MessageCircle } from 'lucide-react';
 import CreateRoomModal from './CreateRoomModal';
+import JoinRoomModal from './JoinRoomModal';
 
-export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick, onPrivateChat }) {
+export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick }) {
   const { user, logout } = useAuth();
   const [rooms, setRooms] = useState([]);
-  const [exploreRooms, setExploreRooms] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showExplore, setShowExplore] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,21 +20,11 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick, on
     try {
       setLoading(true);
       const data = await apiGet('/rooms');
-      setRooms(data.rooms.filter((r) => r.isMember));
-      setExploreRooms(data.rooms.filter((r) => !r.isMember));
+      setRooms(data.rooms);
     } catch (err) {
-      console.error('Failed to fetch rooms:', err);
+      console.error('获取聊天室失败:', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleJoinRoom = async (roomId) => {
-    try {
-      await apiPost(`/rooms/${roomId}/join`);
-      fetchRooms();
-    } catch (err) {
-      console.error('Failed to join room:', err);
     }
   };
 
@@ -44,6 +34,12 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick, on
     setShowCreateModal(false);
   };
 
+  const handleRoomJoined = (room) => {
+    fetchRooms();
+    onRoomSelect(room);
+    setShowJoinModal(false);
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-900 border-r border-gray-800">
       {/* Header */}
@@ -51,14 +47,23 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick, on
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold text-white flex items-center gap-2">
             <MessageCircle className="w-5 h-5 text-indigo-400" />
-            WebChat
+            EuphonXD Chat
           </h1>
+        </div>
+        <div className="flex gap-2 mt-3">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="btn-ghost p-2"
-            title="创建聊天室"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm transition-colors"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
+            创建
+          </button>
+          <button
+            onClick={() => setShowJoinModal(true)}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-sm transition-colors"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            加入
           </button>
         </div>
       </div>
@@ -99,7 +104,8 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick, on
             <div className="p-4 text-center text-gray-500 text-sm">加载中...</div>
           ) : rooms.length === 0 ? (
             <div className="p-4 text-center text-gray-500 text-sm">
-              还没有聊天室，创建一个或探索吧！
+              <p className="mb-2">还没有聊天室</p>
+              <p className="text-xs text-gray-600">创建一个或通过名称和密码加入</p>
             </div>
           ) : (
             <div className="space-y-0.5">
@@ -115,6 +121,9 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick, on
                 >
                   <Hash className="w-4 h-4 flex-shrink-0" />
                   <span className="truncate text-sm">{room.name}</span>
+                  {room.hasPassword && (
+                    <span className="text-xs text-gray-600">🔒</span>
+                  )}
                   <span className="ml-auto text-xs text-gray-600 flex-shrink-0">
                     {room.memberCount}
                   </span>
@@ -122,52 +131,19 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick, on
               ))}
             </div>
           )}
-
-          {/* Explore Rooms */}
-          <div className="mt-4">
-            <button
-              onClick={() => setShowExplore(!showExplore)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
-            >
-              <Compass className="w-4 h-4" />
-              <span className="text-sm">探索聊天室</span>
-              <span className="ml-auto text-xs">{exploreRooms.length}</span>
-            </button>
-
-            {showExplore && (
-              <div className="mt-1 space-y-0.5 animate-slide-down">
-                {exploreRooms.length === 0 ? (
-                  <p className="px-4 py-2 text-xs text-gray-600">暂无可探索的聊天室</p>
-                ) : (
-                  exploreRooms.map((room) => (
-                    <div
-                      key={room.id}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
-                    >
-                      <Hash className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm text-gray-400 truncate">{room.name}</div>
-                      </div>
-                      <button
-                        onClick={() => handleJoinRoom(room.id)}
-                        className="text-xs text-indigo-400 hover:text-indigo-300 px-2 py-1 rounded hover:bg-indigo-400/10 transition-colors"
-                      >
-                        Join
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
-      {/* Create Room Modal */}
       {showCreateModal && (
         <CreateRoomModal
           onClose={() => setShowCreateModal(false)}
           onCreated={handleRoomCreated}
+        />
+      )}
+      {showJoinModal && (
+        <JoinRoomModal
+          onClose={() => setShowJoinModal(false)}
+          onJoined={handleRoomJoined}
         />
       )}
     </div>

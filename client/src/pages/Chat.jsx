@@ -7,7 +7,7 @@ import MessageInput from '../components/MessageInput';
 import MemberList from '../components/MemberList';
 import PrivateChat from '../components/PrivateChat';
 import UserProfile from '../components/UserProfile';
-import { Hash, Users, X } from 'lucide-react';
+import { Hash, Users } from 'lucide-react';
 
 export default function Chat() {
   const { user } = useAuth();
@@ -23,8 +23,8 @@ export default function Chat() {
     setPrivateChatUser(null);
   };
 
-  const handlePrivateChat = (user) => {
-    setPrivateChatUser(user);
+  const handlePrivateChat = (member) => {
+    setPrivateChatUser(member);
     setSelectedRoom(null);
   };
 
@@ -40,7 +40,6 @@ export default function Chat() {
           selectedRoom={selectedRoom}
           onRoomSelect={handleRoomSelect}
           onProfileClick={() => setShowProfile(true)}
-          onPrivateChat={handlePrivateChat}
         />
       </div>
 
@@ -84,7 +83,7 @@ export default function Chat() {
           ) : (
             <div className="flex items-center gap-2 flex-1">
               <Hash className="w-5 h-5 text-gray-400" />
-              <span className="text-gray-500">选择一个聊天室或开始对话</span>
+              <span className="text-gray-500">选择一个聊天室或开始私聊</span>
             </div>
           )}
 
@@ -105,16 +104,10 @@ export default function Chat() {
             {selectedRoom ? (
               <>
                 <MessageList roomId={selectedRoom.id} />
-                <MessageInput
-                  roomId={selectedRoom.id}
-                  socket={socket}
-                />
+                <MessageInput roomId={selectedRoom.id} socket={socket} />
               </>
             ) : privateChatUser ? (
-              <PrivateChat
-                otherUser={privateChatUser}
-                socket={socket}
-              />
+              <PrivateChat otherUser={privateChatUser} socket={socket} />
             ) : (
               <div className="flex-1 flex items-center justify-center text-gray-500">
                 <div className="text-center">
