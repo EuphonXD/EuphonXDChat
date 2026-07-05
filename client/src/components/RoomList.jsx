@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../contexts/SocketContext';
 import { apiGet, apiPost } from '../utils/api';
-import { Hash, Plus, LogOut, User, LogIn, MessageCircle } from 'lucide-react';
+import { Hash, Plus, LogOut, LogIn, MessageCircle } from 'lucide-react';
 import CreateRoomModal from './CreateRoomModal';
 import JoinRoomModal from './JoinRoomModal';
 
 export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick }) {
   const { user, logout } = useAuth();
+  const { socket } = useSocket();
   const [rooms, setRooms] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -15,6 +17,33 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick }) 
   useEffect(() => {
     fetchRooms();
   }, []);
+
+  // Listen for real-time room updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRoomUpdated = ({ roomId, memberCount }) => {
+      setRooms((prev) =>
+        prev.map((r) => (r.id === roomId ? { ...r, memberCount } : r))
+      );
+    };
+
+    const handleRoomCreated = ({ room }) => {
+      // Only add if it's a new room we're not already showing
+      setRooms((prev) => {
+        if (prev.find((r) => r.id === room.id)) return prev;
+        return [room, ...prev];
+      });
+    };
+
+    socket.on('room-updated', handleRoomUpdated);
+    socket.on('room-created', handleRoomCreated);
+
+    return () => {
+      socket.off('room-updated', handleRoomUpdated);
+      socket.off('room-created', handleRoomCreated);
+    };
+  }, [socket]);
 
   const fetchRooms = async () => {
     try {

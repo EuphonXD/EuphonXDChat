@@ -12,26 +12,52 @@ const TABS = [
 export default function EmojiPicker({ isOpen, onClose, onSelectSticker, onSelectKaomoji }) {
   const [activeTab, setActiveTab] = useState('builtin');
   const [packs, setPacks] = useState([]);
-  const [activePack, setActivePack] = useState(null);
+  const [activePackId, setActivePackId] = useState(null);
+  const [packEmojis, setPackEmojis] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [kaomojiSearch, setKaomojiSearch] = useState('');
   const pickerRef = useRef(null);
-  const [loadedImages, setLoadedImages] = useState({});
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && activeTab === 'builtin') {
+      setLoading(true);
       apiGet('/emoji/packs')
         .then((data) => {
-          setPacks(data.packs || []);
-          if (data.packs?.length > 0) {
-            setActivePack(data.packs[0].id);
+          const p = data.packs || [];
+          setPacks(p);
+          if (p.length > 0) {
+            const firstId = activePackId || p[0].id;
+            setActivePackId(firstId);
+            loadPackEmojis(firstId);
           }
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setLoading(false));
     }
-  }, [isOpen]);
+  }, [isOpen, activeTab]);
 
-  // Close on outside click
+  const loadPackEmojis = async (packId) => {
+    try {
+      const data = await apiGet(`/emoji/packs/${packId}`);
+      const cats = data.categories || {};
+      const all = [];
+      for (const [catName, stickers] of Object.entries(cats)) {
+        for (const s of stickers) {
+          all.push({ ...s, category: catName });
+        }
+      }
+      setPackEmojis(all);
+    } catch {
+      setPackEmojis([]);
+    }
+  };
+
+  const handlePackSwitch = (packId) => {
+    setActivePackId(packId);
+    loadPackEmojis(packId);
+  };
+
   useEffect(() => {
     if (!isOpen) return;
     const handleClick = (e) => {
@@ -43,18 +69,11 @@ export default function EmojiPicker({ isOpen, onClose, onSelectSticker, onSelect
     return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen, onClose]);
 
-  // Lazy load images
-  const handleImageLoad = useCallback((id) => {
-    setLoadedImages((prev) => ({ ...prev, [id]: true }));
-  }, []);
-
   if (!isOpen) return null;
 
-  const currentPack = packs.find((p) => p.id === activePack) || packs[0];
-
-  const filteredEmojis = currentPack?.emojis?.filter(
+  const filteredEmojis = packEmojis.filter(
     (e) => !search || e.name.toLowerCase().includes(search.toLowerCase())
-  ) || [];
+  );
 
   const filteredKaomoji = kaomojiCategories.map((cat) => ({
     ...cat,
@@ -63,14 +82,12 @@ export default function EmojiPicker({ isOpen, onClose, onSelectSticker, onSelect
     ),
   })).filter((cat) => cat.items.length > 0);
 
-  const handleStickerClick = (emoji) => {
-    onSelectSticker(emoji.url);
-    onClose();
-  };
-
-  const handleKaomojiClick = (k) => {
-    onSelectKaomoji(k);
-  };
+  // Group emojis by category for display
+  const groupedEmojis = {};
+  for (const e of filteredEmojis) {
+    if (!groupedEmojis[e.category]) groupedEmojis[e.category] = [];
+    groupedEmojis[e.category].push(e);
+  }
 
   return (
     <div
@@ -86,8 +103,8 @@ export default function EmojiPicker({ isOpen, onClose, onSelectSticker, onSelect
             onClick={() => setActiveTab(tab.key)}
             className={`flex-1 px-3 py-2.5 text-sm font-medium transition-colors ${
               activeTab === tab.key
-                ? 'text-indigo-400 border-b-2 border-indigo-400 bg-gray-800/50'
-                : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+                ? 'text-indigo-400 border-b-2 border-indigo-400 bg-gray-700/50'
+                : 'text-gray-400 hover:text-gray-200'
             }`}
           >
             <span className="mr-1">{tab.icon}</span>
@@ -97,91 +114,110 @@ export default function EmojiPicker({ isOpen, onClose, onSelectSticker, onSelect
       </div>
 
       {/* Content */}
-      <div className="overflow-y-auto" style={{ maxHeight: 'calc(400px - 44px)' }}>
+      <div className="overflow-y-auto" style={{ maxHeight: '340px' }}>
         {activeTab === 'builtin' && (
           <>
             {/* Pack selector */}
-            <div className="flex gap-1 p-2 border-b border-gray-700/50 overflow-x-auto">
-              {packs.map((pack) => (
-                <button
-                  key={pack.id}
-                  onClick={() => setActivePack(pack.id)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    activePack === pack.id
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  {pack.name}
-                </button>
-              ))}
-            </div>
+            {packs.length > 1 && (
+              <div className="flex gap-1 p-2 border-b border-gray-700 overflow-x-auto">
+                {packs.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => handlePackSwitch(p.id)}
+                    className={`px-2 py-1 rounded text-xs whitespace-nowrap transition-colors ${
+                      activePackId === p.id
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-700 text-gray-400 hover:bg-gray-600'
+                    }`}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Search */}
-            <div className="px-3 py-2">
+            <div className="p-2 border-b border-gray-700">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="搜索表情..."
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
             </div>
 
-            {/* Sticker grid */}
-            <div className="grid grid-cols-5 gap-1 p-3">
-              {filteredEmojis.map((emoji) => (
-                <button
-                  key={emoji.id}
-                  onClick={() => handleStickerClick(emoji)}
-                  className="aspect-square rounded-lg bg-gray-700/50 hover:bg-gray-600/50 flex items-center justify-center p-1 transition-all hover:scale-110 cursor-pointer"
-                  title={emoji.name}
-                >
-                  <img
-                    src={emoji.url}
-                    alt={emoji.name}
-                    className="w-full h-full object-contain rounded"
-                    loading="lazy"
-                    onLoad={() => handleImageLoad(emoji.id)}
-                  />
-                </button>
-              ))}
-              {filteredEmojis.length === 0 && (
-                <div className="col-span-5 text-center text-gray-500 py-8 text-sm">
-                  没有找到匹配的表情
-                </div>
-              )}
-            </div>
+            {/* Emoji grid */}
+            {loading ? (
+              <div className="p-8 text-center text-gray-500">加载中...</div>
+            ) : Object.keys(groupedEmojis).length === 0 ? (
+              <div className="p-8 text-center text-gray-500">暂无表情</div>
+            ) : (
+              <div className="p-2">
+                {Object.entries(groupedEmojis).map(([catName, emojis]) => (
+                  <div key={catName} className="mb-3">
+                    <div className="text-xs text-gray-500 px-1 mb-1.5 font-medium">{catName}</div>
+                    <div className="grid grid-cols-5 gap-1">
+                      {emojis.map((emoji, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            onSelectSticker(emoji.url);
+                            onClose();
+                          }}
+                          className="w-full aspect-square rounded-lg bg-gray-700 hover:bg-gray-600 flex items-center justify-center overflow-hidden transition-colors p-1"
+                          title={emoji.name}
+                        >
+                          <img
+                            src={emoji.url}
+                            alt={emoji.name}
+                            className="max-w-full max-h-full object-contain"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.parentElement.innerHTML = `<span class="text-xs text-gray-500">${emoji.name.slice(0,4)}</span>`;
+                            }}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </>
+        )}
+
+        {activeTab === 'custom' && (
+          <CustomEmojiUpload onClose={onClose} onSelectSticker={onSelectSticker} />
         )}
 
         {activeTab === 'kaomoji' && (
           <>
-            {/* Search */}
-            <div className="px-3 py-2">
+            <div className="p-2 border-b border-gray-700">
               <input
                 type="text"
                 value={kaomojiSearch}
                 onChange={(e) => setKaomojiSearch(e.target.value)}
                 placeholder="搜索颜文字..."
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
             </div>
-
-            {/* Kaomoji by category */}
-            <div className="p-3 space-y-3">
+            <div className="p-2">
               {filteredKaomoji.map((cat) => (
-                <div key={cat.name}>
-                  <div className="text-xs font-medium text-gray-400 mb-1.5 flex items-center gap-1">
-                    <span>{cat.emoji}</span>
-                    <span>{cat.name}</span>
+                <div key={cat.name} className="mb-3">
+                  <div className="text-xs text-gray-500 px-1 mb-1.5 font-medium">
+                    {cat.emoji} {cat.name}
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    {cat.items.map((k, i) => (
+                    {cat.items.map((k, idx) => (
                       <button
-                        key={`${cat.name}-${i}`}
-                        onClick={() => handleKaomojiClick(k)}
-                        className="px-2 py-1 bg-gray-700/50 hover:bg-gray-600/50 rounded text-sm text-gray-200 transition-colors cursor-pointer whitespace-nowrap"
+                        key={idx}
+                        onClick={() => {
+                          onSelectKaomoji(k);
+                          onClose();
+                        }}
+                        className="px-2 py-1 rounded-lg bg-gray-700 hover:bg-gray-600 text-sm text-gray-200 transition-colors"
                       >
                         {k}
                       </button>
@@ -191,12 +227,6 @@ export default function EmojiPicker({ isOpen, onClose, onSelectSticker, onSelect
               ))}
             </div>
           </>
-        )}
-
-        {activeTab === 'custom' && (
-          <div className="p-3">
-            <CustomEmojiUpload />
-          </div>
         )}
       </div>
     </div>

@@ -5,6 +5,7 @@ import {
   leaveRoom, getMembers, inviteToRoom, findRoomById, findRoomByName,
   isRoomMember, searchUsers
 } from '../db.js';
+import { getIO } from '../socket.js';
 
 const router = Router();
 router.use(authMiddleware);
@@ -22,6 +23,15 @@ router.post('/', (req, res) => {
     if (!name || !name.trim()) return res.status(400).json({ error: '请输入聊天室名称' });
     if (name.trim().length > 50) return res.status(400).json({ error: '名称不能超过50个字符' });
     const room = createRoom(name.trim(), description || '', req.user.id, password || null);
+
+    // Broadcast new room to all connected users
+    const io = getIO();
+    if (io) {
+      io.emit('room-created', {
+        room: { id: room.id, name: room.name, description: room.description, hasPassword: !!password, memberCount: 1 }
+      });
+    }
+
     res.status(201).json({ room: { ...room, hasPassword: !!password } });
   } catch (err) {
     if (err.message && err.message.includes('UNIQUE')) {
@@ -40,6 +50,14 @@ router.post('/join', (req, res) => {
     const result = joinRoomByName(name.trim(), req.user.id, password);
     if (result.error) return res.status(400).json({ error: result.error });
     const roomInfo = findRoomByName(name.trim());
+
+    // Broadcast member count update
+    const io = getIO();
+    if (io && roomInfo) {
+      const members = getMembers(roomInfo.id);
+      io.emit('room-updated', { roomId: roomInfo.id, memberCount: members.length });
+    }
+
     res.json({
       message: '已加入聊天室',
       room: roomInfo ? { id: roomInfo.id, name: roomInfo.name, description: roomInfo.description } : undefined
@@ -61,6 +79,14 @@ router.post('/:id/invite', (req, res) => {
     }
     const result = inviteToRoom(roomId, req.user.id, userId);
     if (result.error) return res.status(400).json({ error: result.error });
+
+    // Broadcast member count update
+    const io = getIO();
+    if (io) {
+      const members = getMembers(roomId);
+      io.emit('room-updated', { roomId, memberCount: members.length });
+    }
+
     res.json({ message: result.message || '邀请成功' });
   } catch (err) {
     console.error('Invite error:', err);
@@ -73,6 +99,14 @@ router.post('/:id/leave', (req, res) => {
   try {
     const roomId = Number(req.params.id);
     leaveRoom(roomId, req.user.id);
+
+    // Broadcast member count update
+    const io = getIO();
+    if (io) {
+      const members = getMembers(roomId);
+      io.emit('room-updated', { roomId, memberCount: members.length });
+    }
+
     res.json({ message: '已退出聊天室' });
   } catch (err) {
     console.error('Leave room error:', err);

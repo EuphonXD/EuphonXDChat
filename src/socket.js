@@ -5,7 +5,16 @@ import { findUserById } from './db.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'webchat-secret-key-2026';
 const onlineUsers = new Map(); // userId -> Set<socketId>
 
+// Shared reference to io instance for use in routes
+let ioInstance = null;
+
+export function getIO() {
+  return ioInstance;
+}
+
 export function setupSocket(io) {
+  ioInstance = io;
+
   // Auth middleware
   io.use((socket, next) => {
     const token = socket.handshake.auth.token || socket.handshake.query.token;
@@ -28,14 +37,21 @@ export function setupSocket(io) {
     onlineUsers.get(userId).add(socket.id);
     io.emit('online-users', [...onlineUsers.keys()]);
 
+    // Join personal channel for private messages
+    socket.join(userId.toString());
+
     // ── Room events ──
     socket.on('join-room', (roomId) => {
       const roomName = `room:${roomId}`;
       socket.join(roomName);
 
-      // Notify room
+      // Notify room members
       const user = findUserById(userId);
       io.to(roomName).emit('user-joined', { roomId, user });
+
+      // Broadcast member count update to all
+      const members = getMembers(roomId);
+      io.emit('room-updated', { roomId, memberCount: members.length });
 
       socket.emit('room-joined', { roomId });
     });
@@ -44,6 +60,10 @@ export function setupSocket(io) {
       const roomName = `room:${roomId}`;
       socket.leave(roomName);
       io.to(roomName).emit('user-left', { roomId, userId });
+
+      // Broadcast member count update
+      const members = getMembers(roomId);
+      io.emit('room-updated', { roomId, memberCount: members.length });
     });
 
     // ── Messaging ──
@@ -60,7 +80,6 @@ export function setupSocket(io) {
       if (!content || !content.trim() || !toUserId) return;
 
       const pm = savePrivateMessage(userId, toUserId, content);
-      // Send to both sender and recipient
       io.to(userId.toString()).emit('new-private-message', pm);
       io.to(toUserId.toString()).emit('new-private-message', pm);
     });

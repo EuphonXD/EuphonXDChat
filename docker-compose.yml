@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   webchat:
     build: .
@@ -8,8 +6,12 @@ services:
     ports:
       - "23777:23777"
     volumes:
-      - ./data:/app/data
+      - webchat-data:/app/data
     environment:
       - JWT_SECRET=change-me-in-production
       - PORT=23777
       - NODE_ENV=production
+
+volumes:
+  webchat-data:
+    driver: local
