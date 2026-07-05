@@ -6,10 +6,10 @@ services:
     container_name: webchat
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "23777:23777"
     volumes:
       - ./data:/app/data
     environment:
       - JWT_SECRET=change-me-in-production
-      - PORT=3001
+      - PORT=23777
       - NODE_ENV=production

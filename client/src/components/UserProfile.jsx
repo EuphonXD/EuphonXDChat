@@ -16,7 +16,7 @@ export default function UserProfile({ onClose }) {
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      setError('Avatar must be under 2MB');
+      setError('头像大小不能超过 2MB');
       return;
     }
 
@@ -55,7 +55,7 @@ export default function UserProfile({ onClose }) {
       <div className="card w-full max-w-md mx-4 p-6 animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-white">Profile Settings</h2>
+          <h2 className="text-lg font-semibold text-white">个人设置</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-white transition-colors"
@@ -90,14 +90,14 @@ export default function UserProfile({ onClose }) {
               />
             </label>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Click to change avatar</p>
+          <p className="text-xs text-gray-500 mt-2">点击更换头像</p>
         </div>
 
         {/* Fields */}
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1.5">
-              Username
+              用户名
             </label>
             <input
               type="text"
@@ -109,20 +109,20 @@ export default function UserProfile({ onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1.5">
-              Display Name
+              显示名称
             </label>
             <input
               type="text"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               className="input-dark"
-              placeholder="Enter display name"
+              placeholder="输入显示名称"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1.5">
-              Email
+              邮箱
             </label>
             <input
               type="email"
@@ -145,10 +145,10 @@ export default function UserProfile({ onClose }) {
             ) : saved ? (
               <>
                 <Check className="w-4 h-4" />
-                Saved!
+                已保存！
               </>
             ) : (
-              'Save Changes'
+              '保存修改'
             )}
           </button>
 
@@ -156,7 +156,7 @@ export default function UserProfile({ onClose }) {
             onClick={handleLogout}
             className="w-full px-4 py-2.5 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors text-sm font-medium"
           >
-            Sign Out
+            退出登录
           </button>
         </div>
       </div>

@@ -127,8 +127,8 @@ export default function PrivateChat({ otherUser, socket }) {
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <div className="text-center">
-              <p className="text-lg mb-1">Start a conversation</p>
-              <p className="text-sm">Send the first message to {otherUser.nickname || otherUser.username}</p>
+              <p className="text-lg mb-1">开始对话</p>
+              <p className="text-sm">给 {otherUser.nickname || otherUser.username}</p>
             </div>
           </div>
         ) : (
@@ -188,7 +188,7 @@ export default function PrivateChat({ otherUser, socket }) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`Message ${otherUser.nickname || otherUser.username}...`}
+            placeholder={`发送消息给 ${otherUser.nickname || otherUser.username}...`}
             rows={1}
             className="flex-1 resize-none bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
             style={{ minHeight: '48px', maxHeight: '120px' }}

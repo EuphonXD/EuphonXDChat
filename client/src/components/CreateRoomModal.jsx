@@ -51,7 +51,7 @@ export default function CreateRoomModal({ onClose, onCreated }) {
             <div className="w-10 h-10 rounded-lg bg-indigo-600/20 flex items-center justify-center">
               <Hash className="w-5 h-5 text-indigo-400" />
             </div>
-            <h2 className="text-lg font-semibold text-white">Create Room</h2>
+            <h2 className="text-lg font-semibold text-white">创建聊天室</h2>
           </div>
           <button
             onClick={onClose}
@@ -70,7 +70,7 @@ export default function CreateRoomModal({ onClose, onCreated }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-1.5">
-              Room Name <span className="text-red-400">*</span>
+              聊天室名称 <span className="text-red-400">*</span>
             </label>
             <input
               ref={inputRef}
@@ -92,7 +92,7 @@ export default function CreateRoomModal({ onClose, onCreated }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="input-dark resize-none"
-              placeholder="What's this room about?"
+              placeholder="这个聊天室是关于什么的？"
               rows={3}
               maxLength={200}
             />
@@ -104,7 +104,7 @@ export default function CreateRoomModal({ onClose, onCreated }) {
               onClick={onClose}
               className="btn-secondary flex-1"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
@@ -114,7 +114,7 @@ export default function CreateRoomModal({ onClose, onCreated }) {
               {loading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto"></div>
               ) : (
-                'Create Room'
+                '创建聊天室'
               )}
             </button>
           </div>

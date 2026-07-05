@@ -56,7 +56,7 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick, on
           <button
             onClick={() => setShowCreateModal(true)}
             className="btn-ghost p-2"
-            title="Create Room"
+            title="创建聊天室"
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -91,15 +91,15 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick, on
         <div className="p-2">
           <div className="flex items-center justify-between px-2 py-1">
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Your Rooms
+              我的聊天室
             </span>
           </div>
 
           {loading ? (
-            <div className="p-4 text-center text-gray-500 text-sm">Loading...</div>
+            <div className="p-4 text-center text-gray-500 text-sm">加载中...</div>
           ) : rooms.length === 0 ? (
             <div className="p-4 text-center text-gray-500 text-sm">
-              No rooms yet. Create or explore one!
+              还没有聊天室，创建一个或探索吧！
             </div>
           ) : (
             <div className="space-y-0.5">
@@ -130,14 +130,14 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick, on
               className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-gray-500 hover:bg-gray-800 hover:text-gray-300 transition-colors"
             >
               <Compass className="w-4 h-4" />
-              <span className="text-sm">Explore Rooms</span>
+              <span className="text-sm">探索聊天室</span>
               <span className="ml-auto text-xs">{exploreRooms.length}</span>
             </button>
 
             {showExplore && (
               <div className="mt-1 space-y-0.5 animate-slide-down">
                 {exploreRooms.length === 0 ? (
-                  <p className="px-4 py-2 text-xs text-gray-600">No rooms to explore</p>
+                  <p className="px-4 py-2 text-xs text-gray-600">暂无可探索的聊天室</p>
                 ) : (
                   exploreRooms.map((room) => (
                     <div

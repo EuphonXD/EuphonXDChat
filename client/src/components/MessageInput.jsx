@@ -63,7 +63,7 @@ export default function MessageInput({ roomId, socket }) {
               handleTyping();
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
+            placeholder="输入消息..."
             rows={1}
             className="w-full resize-none bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
             style={{ minHeight: '48px', maxHeight: '120px' }}

@@ -79,12 +79,12 @@ export default function Chat() {
               <h2 className="font-semibold text-white truncate">
                 {privateChatUser.nickname || privateChatUser.username}
               </h2>
-              <span className="text-sm text-gray-500 hidden sm:inline">Private Message</span>
+              <span className="text-sm text-gray-500 hidden sm:inline">私信</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 flex-1">
               <Hash className="w-5 h-5 text-gray-400" />
-              <span className="text-gray-500">Select a room or start a conversation</span>
+              <span className="text-gray-500">选择一个聊天室或开始对话</span>
             </div>
           )}
 
@@ -119,7 +119,7 @@ export default function Chat() {
               <div className="flex-1 flex items-center justify-center text-gray-500">
                 <div className="text-center">
                   <Hash className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                  <p className="text-lg">Select a room to start chatting</p>
+                  <p className="text-lg">选择一个聊天室开始聊天</p>
                 </div>
               </div>
             )}

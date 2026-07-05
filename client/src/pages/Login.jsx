@@ -40,13 +40,13 @@ export default function Login() {
             <MessageCircle className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white">WebChat</h1>
-          <p className="text-gray-400 mt-2">Connect with anyone, anywhere</p>
+          <p className="text-gray-400 mt-2">随时随地，畅聊无界</p>
         </div>
 
         {/* Form Card */}
         <div className="card p-8 animate-slide-up">
           <h2 className="text-xl font-semibold text-white mb-6">
-            {isRegister ? 'Create Account' : 'Welcome Back'}
+            {isRegister ? '创建账号' : '欢迎回来'}
           </h2>
 
           {error && (
@@ -58,7 +58,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Username */}
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1.5">Username</label>
+              <label className="block text-sm font-medium text-gray-400 mb-1.5">用户名</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
@@ -66,7 +66,7 @@ export default function Login() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="input-dark pl-10"
-                  placeholder="Enter your username"
+                  placeholder="请输入用户名"
                   required
                 />
               </div>
@@ -75,7 +75,7 @@ export default function Login() {
             {/* Email (register only) */}
             {isRegister && (
               <div className="animate-slide-down">
-                <label className="block text-sm font-medium text-gray-400 mb-1.5">Email</label>
+                <label className="block text-sm font-medium text-gray-400 mb-1.5">邮箱</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <input
@@ -83,7 +83,7 @@ export default function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="input-dark pl-10"
-                    placeholder="Enter your email"
+                    placeholder="请输入邮箱"
                     required
                   />
                 </div>
@@ -92,7 +92,7 @@ export default function Login() {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-1.5">Password</label>
+              <label className="block text-sm font-medium text-gray-400 mb-1.5">密码</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
@@ -100,7 +100,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="input-dark pl-10 pr-10"
-                  placeholder="Enter your password"
+                  placeholder="请输入密码"
                   required
                 />
                 <button
@@ -116,7 +116,7 @@ export default function Login() {
             {/* Nickname (register only) */}
             {isRegister && (
               <div className="animate-slide-down">
-                <label className="block text-sm font-medium text-gray-400 mb-1.5">Nickname</label>
+                <label className="block text-sm font-medium text-gray-400 mb-1.5">昵称</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <input
@@ -124,7 +124,7 @@ export default function Login() {
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     className="input-dark pl-10"
-                    placeholder="Display name (optional)"
+                    placeholder="显示名称（可选）"
                   />
                 </div>
               </div>
@@ -139,7 +139,7 @@ export default function Login() {
               {loading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               ) : (
-                isRegister ? 'Create Account' : 'Sign In'
+                isRegister ? '创建账号' : '登录'
               )}
             </button>
           </form>
@@ -154,8 +154,8 @@ export default function Login() {
               className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
             >
               {isRegister
-                ? 'Already have an account? Sign in'
-                : "Don't have an account? Create one"}
+                ? '已有账号？去登录'
+                : "没有账号？创建一个"}
             </button>
           </div>
         </div>

@@ -157,8 +157,8 @@ export default function MessageList({ roomId }) {
       {messages.length === 0 ? (
         <div className="flex items-center justify-center h-full text-gray-500">
           <div className="text-center">
-            <p className="text-lg mb-1">No messages yet</p>
-            <p className="text-sm">Start the conversation!</p>
+            <p className="text-lg mb-1">暂无消息</p>
+            <p className="text-sm">开始对话吧！</p>
           </div>
         </div>
       ) : (

@@ -48,7 +48,7 @@ export default function MemberList({ roomId, onPrivateChat, currentUserId }) {
     <div className="h-full flex flex-col bg-gray-900/50">
       <div className="p-4 border-b border-gray-800">
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-          Members — {members.length}
+          成员 — {members.length}
         </h3>
       </div>
 
@@ -56,7 +56,7 @@ export default function MemberList({ roomId, onPrivateChat, currentUserId }) {
         {online.length > 0 && (
           <div className="mb-4">
             <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Online — {online.length}
+              在线 — {online.length}
             </div>
             <div className="space-y-0.5">
               {online.map((member) => (
@@ -75,7 +75,7 @@ export default function MemberList({ roomId, onPrivateChat, currentUserId }) {
         {offline.length > 0 && (
           <div>
             <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Offline — {offline.length}
+              离线 — {offline.length}
             </div>
             <div className="space-y-0.5">
               {offline.map((member) => (
@@ -116,13 +116,13 @@ function MemberItem({ member, online, isCurrentUser, onPrivateChat }) {
       </div>
       <span className="flex-1 text-sm text-gray-300 truncate">
         {member.nickname || member.username}
-        {isCurrentUser && <span className="text-gray-600 ml-1">(you)</span>}
+        {isCurrentUser && <span className="text-gray-600 ml-1">（我）</span>}
       </span>
       {!isCurrentUser && (
         <button
           onClick={() => onPrivateChat(member)}
           className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-indigo-400 transition-all"
-          title="Send private message"
+          title="发送私信"
         >
           <MessageSquare className="w-4 h-4" />
         </button>
