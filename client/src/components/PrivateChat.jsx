@@ -3,14 +3,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { apiGet } from '../utils/api';
 import { format } from 'date-fns';
 import { Send } from 'lucide-react';
+import EmojiPicker from './EmojiPicker';
 
 export default function PrivateChat({ otherUser, socket }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState('');
+  const [showEmoji, setShowEmoji] = useState(false);
   const messagesEndRef = useRef(null);
   const containerRef = useRef(null);
+  const inputRef = useRef(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   useEffect(() => {
@@ -79,6 +82,16 @@ export default function PrivateChat({ otherUser, socket }) {
       e.preventDefault();
       handleSubmit(e);
     }
+  };
+
+  const handleSelectSticker = (url) => {
+    if (!socket) return;
+    socket.emit('send-private', { toUserId: otherUser.id, content: `[sticker:${url}]` });
+  };
+
+  const handleSelectKaomoji = (k) => {
+    setContent((prev) => prev + k);
+    inputRef.current?.focus();
   };
 
   const formatTime = (dateStr) => {
@@ -170,7 +183,16 @@ export default function PrivateChat({ otherUser, socket }) {
                       </div>
                     )}
                     <p className="text-gray-200 text-sm whitespace-pre-wrap break-words">
-                      {msg.content}
+                      {msg.content.startsWith('[sticker:') && msg.content.endsWith(']') ? (
+                        <img
+                          src={msg.content.slice(9, -1)}
+                          alt="sticker"
+                          className="max-w-[200px] max-h-[200px] object-contain inline-block"
+                          loading="lazy"
+                        />
+                      ) : (
+                        msg.content
+                      )}
                     </p>
                   </div>
                 </div>
@@ -183,8 +205,18 @@ export default function PrivateChat({ otherUser, socket }) {
 
       {/* Input */}
       <div className="p-4 border-t border-gray-800 bg-gray-900/50">
+        {/* Emoji picker */}
+        <div className="relative">
+          <EmojiPicker
+            isOpen={showEmoji}
+            onClose={() => setShowEmoji(false)}
+            onSelectSticker={handleSelectSticker}
+            onSelectKaomoji={handleSelectKaomoji}
+          />
+        </div>
         <form onSubmit={handleSubmit} className="flex gap-2">
           <textarea
+            ref={inputRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -193,6 +225,13 @@ export default function PrivateChat({ otherUser, socket }) {
             className="flex-1 resize-none bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
             style={{ minHeight: '48px', maxHeight: '120px' }}
           />
+          <button
+            type="button"
+            onClick={() => setShowEmoji((v) => !v)}
+            className="flex-shrink-0 w-12 h-12 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-all duration-200"
+          >
+            <span className="text-xl">😊</span>
+          </button>
           <button
             type="submit"
             disabled={!content.trim()}

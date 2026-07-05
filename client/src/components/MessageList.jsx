@@ -146,7 +146,7 @@ export default function MessageList({ roomId }) {
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto px-4 py-2"
+      className="flex-1 overflow-y-auto px-2 sm:px-4 py-2"
     >
       {loadingMore && (
         <div className="text-center py-2">
@@ -172,7 +172,7 @@ export default function MessageList({ roomId }) {
             return (
               <div key={msg.id}>
                 {showDate && (
-                  <div className="flex items-center gap-4 my-4">
+                  <div className="flex items-center gap-3 sm:gap-4 my-3 sm:my-4">
                     <div className="flex-1 h-px bg-gray-800"></div>
                     <span className="text-xs text-gray-500 font-medium">
                       {formatDate(msg.createdAt)}
@@ -182,18 +182,22 @@ export default function MessageList({ roomId }) {
                 )}
 
                 <div
-                  className={`flex gap-3 hover:bg-gray-800/30 px-2 py-0.5 rounded ${
-                    isFirstInGroup ? 'mt-3' : ''
+                  className={`flex gap-2 sm:gap-3 hover:bg-gray-800/30 px-1 sm:px-2 py-0.5 rounded ${
+                    isFirstInGroup ? 'mt-2 sm:mt-3' : ''
                   }`}
                 >
                   {/* Avatar or spacer */}
-                  <div className="w-10 flex-shrink-0">
+                  <div className="w-8 sm:w-10 flex-shrink-0">
                     {isFirstInGroup && (
-                      <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-700 flex items-center justify-center">
                         {msg.avatar ? (
-                          <img src={msg.avatar} alt="" className="w-10 h-10 rounded-full" />
+                          <img
+                            src={msg.avatar}
+                            alt=""
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full"
+                          />
                         ) : (
-                          <span className="text-sm font-medium text-white">
+                          <span className="text-xs sm:text-sm font-medium text-white">
                             {(msg.nickname || msg.username || '?')[0].toUpperCase()}
                           </span>
                         )}
@@ -214,7 +218,16 @@ export default function MessageList({ roomId }) {
                       </div>
                     )}
                     <p className="text-gray-200 text-sm whitespace-pre-wrap break-words">
-                      {msg.content}
+                      {msg.content.startsWith('[sticker:') && msg.content.endsWith(']') ? (
+                        <img
+                          src={msg.content.slice(9, -1)}
+                          alt="sticker"
+                          className="max-w-[200px] max-h-[200px] object-contain inline-block"
+                          loading="lazy"
+                        />
+                      ) : (
+                        msg.content
+                      )}
                     </p>
                   </div>
                 </div>

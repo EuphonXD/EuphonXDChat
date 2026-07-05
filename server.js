@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './src/routes/auth.js';
 import roomRoutes from './src/routes/rooms.js';
 import messageRoutes from './src/routes/messages.js';
+import emojiRoutes from './src/routes/emoji.js';
 import { setupSocket } from './src/socket.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,15 +28,21 @@ app.use(express.json({ limit: '5mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/emoji', emojiRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ── Static assets ──
+app.use('/emoji', express.static(path.join(__dirname, 'server', 'emoji')));
+
 // ── Serve static frontend if built ──
 const clientDist = path.join(__dirname, 'client', 'dist');
 app.use(express.static(clientDist));
+// Serve uploaded emoji files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // SPA fallback
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api') && !req.path.startsWith('/socket.io')) {

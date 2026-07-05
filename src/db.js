@@ -53,6 +53,14 @@ db.exec(`
     content TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS custom_emojis (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // ── User helpers ──
@@ -218,6 +226,26 @@ export function saveMessage(roomId, userId, content) {
     JOIN users u ON m.user_id = u.id
     WHERE m.id = ?
   `).get(info.lastInsertRowid);
+}
+
+export function saveCustomEmoji(userId, name, url) {
+  const info = db.prepare(
+    `INSERT INTO custom_emojis (user_id, name, url) VALUES (?, ?, ?)`
+  ).run(userId, name, url);
+  return db.prepare(`SELECT * FROM custom_emojis WHERE id = ?`).get(info.lastInsertRowid);
+}
+
+export function getCustomEmojis(userId) {
+  return db.prepare(
+    `SELECT id, name, url, created_at AS createdAt FROM custom_emojis WHERE user_id = ? ORDER BY created_at DESC`
+  ).all(userId);
+}
+
+export function deleteCustomEmoji(id, userId) {
+  const info = db.prepare(
+    `DELETE FROM custom_emojis WHERE id = ? AND user_id = ?`
+  ).run(id, userId);
+  return info.changes > 0;
 }
 
 // ── Private message helpers ──

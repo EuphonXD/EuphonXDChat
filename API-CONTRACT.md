@@ -88,6 +88,48 @@
 { "conversations": [{ "userId": 2, "username": "str", "nickname": "str", "avatar": "str|null", "lastMessage": "str", "lastMessageAt": "ISO8601" }] }
 ```
 
+## Emoji Routes (`/api/emoji`)
+
+### GET /api/emoji/packs
+```json
+// Response 200
+{ "packs": [{ "name": "shangskr-owo", "filename": "shangskr-owo.json", "categories": ["可爱猫"], "stickerCount": 50 }] }
+```
+
+### GET /api/emoji/packs/:packName
+```json
+// Response 200
+{ "pack": "shangskr-owo", "categories": { "可爱猫": [{ "name": "blobcat-心", "url": "https://..." }] } }
+// Response 404
+{ "error": "Pack not found" }
+```
+
+### POST /api/emoji/custom (requires JWT)
+```json
+// Request
+{ "name": "my-sticker", "url": "https://..." }
+// Response 201
+{ "emoji": { "id": 1, "user_id": 1, "name": "my-sticker", "url": "https://...", "created_at": "..." } }
+```
+
+### GET /api/emoji/custom (requires JWT)
+```json
+// Response 200
+{ "emojis": [{ "id": 1, "name": "my-sticker", "url": "https://...", "createdAt": "..." }] }
+```
+
+### DELETE /api/emoji/custom/:id (requires JWT)
+```json
+// Response 200
+{ "success": true }
+// Response 404
+{ "error": "Sticker not found or not yours" }
+```
+
+### Static Files
+- Built-in emoji JSON files served at `/emoji/:filename`
+- Example: `GET /emoji/shangskr-owo.json`
+
 ## Socket.IO Events
 
 ### Client → Server
@@ -146,6 +188,14 @@ CREATE TABLE private_messages (
   from_user_id INTEGER REFERENCES users(id),
   to_user_id INTEGER REFERENCES users(id),
   content TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE custom_emojis (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  url TEXT NOT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```

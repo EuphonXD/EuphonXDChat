@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
+import EmojiPicker from './EmojiPicker';
 
 export default function MessageInput({ roomId, socket }) {
   const [content, setContent] = useState('');
   const [typing, setTyping] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
   const inputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -51,8 +53,27 @@ export default function MessageInput({ roomId, socket }) {
     }
   };
 
+  const handleSelectSticker = (url) => {
+    if (!socket) return;
+    socket.emit('send-message', { roomId, content: `[sticker:${url}]` });
+  };
+
+  const handleSelectKaomoji = (k) => {
+    setContent((prev) => prev + k);
+    inputRef.current?.focus();
+  };
+
   return (
     <div className="p-4 border-t border-gray-800 bg-gray-900/50">
+      {/* Emoji picker */}
+      <div className="relative">
+        <EmojiPicker
+          isOpen={showEmoji}
+          onClose={() => setShowEmoji(false)}
+          onSelectSticker={handleSelectSticker}
+          onSelectKaomoji={handleSelectKaomoji}
+        />
+      </div>
       <form onSubmit={handleSubmit} className="flex gap-2">
         <div className="flex-1 relative">
           <textarea
@@ -69,6 +90,13 @@ export default function MessageInput({ roomId, socket }) {
             style={{ minHeight: '48px', maxHeight: '120px' }}
           />
         </div>
+        <button
+          type="button"
+          onClick={() => setShowEmoji((v) => !v)}
+          className="flex-shrink-0 w-12 h-12 rounded-xl bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-all duration-200"
+        >
+          <span className="text-xl">😊</span>
+        </button>
         <button
           type="submit"
           disabled={!content.trim()}

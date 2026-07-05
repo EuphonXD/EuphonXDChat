@@ -37,11 +37,16 @@ export default function JoinRoomModal({ onClose, onJoined }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
       <div
-        className="card w-full max-w-md mx-4 p-6 animate-slide-up"
+        className="card w-full sm:max-w-md sm:mx-4 p-6 animate-slide-up rounded-t-2xl sm:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile drag handle */}
+        <div className="flex justify-center -mt-2 mb-2 sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-gray-600" />
+        </div>
+
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
@@ -49,7 +54,7 @@ export default function JoinRoomModal({ onClose, onJoined }) {
             </div>
             <h2 className="text-lg font-semibold text-white">加入聊天室</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors p-1.5">
             <X className="w-5 h-5" />
           </button>
         </div>

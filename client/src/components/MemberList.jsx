@@ -3,7 +3,7 @@ import { apiGet, apiPost } from '../utils/api';
 import { useSocket } from '../contexts/SocketContext';
 import { UserPlus, Search, X } from 'lucide-react';
 
-export default function MemberList({ roomId, onPrivateChat, currentUserId }) {
+export default function MemberList({ roomId, onPrivateChat, currentUserId, onClose }) {
   const { socket } = useSocket();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,19 +69,41 @@ export default function MemberList({ roomId, onPrivateChat, currentUserId }) {
     }
   };
 
+  const handleMemberClick = (member) => {
+    onPrivateChat(member);
+    onClose?.();
+  };
+
   return (
     <div className="h-full flex flex-col bg-gray-900">
+      {/* Mobile drag handle */}
+      {onClose && (
+        <div className="flex justify-center pt-2 pb-1 md:hidden">
+          <div className="w-10 h-1 rounded-full bg-gray-600" />
+        </div>
+      )}
+
       <div className="p-3 border-b border-gray-800 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-300">
           成员 — {members.length}
         </h3>
-        <button
-          onClick={() => setShowInvite(!showInvite)}
-          className="text-gray-500 hover:text-indigo-400 transition-colors"
-          title="邀请成员"
-        >
-          <UserPlus className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowInvite(!showInvite)}
+            className="text-gray-500 hover:text-indigo-400 transition-colors p-1.5"
+            title="邀请成员"
+          >
+            <UserPlus className="w-4 h-4" />
+          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-white transition-colors p-1.5 md:hidden"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {showInvite && (
@@ -92,7 +114,7 @@ export default function MemberList({ roomId, onPrivateChat, currentUserId }) {
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-8 pr-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               placeholder="搜索用户名或昵称..."
               autoFocus
             />
@@ -133,7 +155,7 @@ export default function MemberList({ roomId, onPrivateChat, currentUserId }) {
             {members.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-800 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
                   {member.avatar ? (
@@ -154,8 +176,8 @@ export default function MemberList({ roomId, onPrivateChat, currentUserId }) {
                 </div>
                 {member.id !== currentUserId && (
                   <button
-                    onClick={() => onPrivateChat(member)}
-                    className="text-xs text-gray-500 hover:text-indigo-400 px-1.5 py-0.5 rounded hover:bg-gray-700 transition-colors"
+                    onClick={() => handleMemberClick(member)}
+                    className="text-xs text-gray-500 hover:text-indigo-400 px-2 py-1 rounded hover:bg-gray-700 transition-colors"
                     title="发送私信"
                   >
                     私信
