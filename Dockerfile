@@ -7,7 +7,9 @@ COPY package.json package-lock.json* ./
 COPY server.js ./
 COPY src/ ./src/
 COPY server/ ./server/
-COPY .env ./
+
+# Copy .env if it exists (otherwise use docker-compose env vars)
+COPY .env* ./
 
 # Install backend dependencies
 RUN npm ci
@@ -16,6 +18,6 @@ RUN npm ci
 COPY client/ ./client/
 RUN cd client && npm ci && npm run build
 
-EXPOSE 3001
+EXPOSE 23777
 
 CMD ["node", "server.js"]
