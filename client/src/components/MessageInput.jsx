@@ -11,7 +11,15 @@ export default function MessageInput({ roomId, socket }) {
 
   useEffect(() => {
     inputRef.current?.focus();
-  }, [roomId]);
+
+    // Join the Socket.IO room channel when entering a room
+    if (socket && roomId) {
+      socket.emit('join-room', roomId);
+      return () => {
+        socket.emit('leave-room', roomId);
+      };
+    }
+  }, [roomId, socket]);
 
   const handleTyping = () => {
     if (!typing && socket) {

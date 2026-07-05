@@ -21,28 +21,7 @@ export default function Sidebar({ selectedRoom, onRoomSelect, onProfileClick }) 
   // Listen for real-time room updates
   useEffect(() => {
     if (!socket) return;
-
-    const handleRoomUpdated = ({ roomId, memberCount }) => {
-      setRooms((prev) =>
-        prev.map((r) => (r.id === roomId ? { ...r, memberCount } : r))
-      );
-    };
-
-    const handleRoomCreated = ({ room }) => {
-      // Only add if it's a new room we're not already showing
-      setRooms((prev) => {
-        if (prev.find((r) => r.id === room.id)) return prev;
-        return [room, ...prev];
-      });
-    };
-
-    socket.on('room-updated', handleRoomUpdated);
-    socket.on('room-created', handleRoomCreated);
-
-    return () => {
-      socket.off('room-updated', handleRoomUpdated);
-      socket.off('room-created', handleRoomCreated);
-    };
+    return () => {};
   }, [socket]);
 
   const fetchRooms = async () => {

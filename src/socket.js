@@ -44,15 +44,8 @@ export function setupSocket(io) {
     socket.on('join-room', (roomId) => {
       const roomName = `room:${roomId}`;
       socket.join(roomName);
-
-      // Notify room members
       const user = findUserById(userId);
       io.to(roomName).emit('user-joined', { roomId, user });
-
-      // Broadcast member count update to all
-      const members = getMembers(roomId);
-      io.emit('room-updated', { roomId, memberCount: members.length });
-
       socket.emit('room-joined', { roomId });
     });
 
@@ -60,10 +53,6 @@ export function setupSocket(io) {
       const roomName = `room:${roomId}`;
       socket.leave(roomName);
       io.to(roomName).emit('user-left', { roomId, userId });
-
-      // Broadcast member count update
-      const members = getMembers(roomId);
-      io.emit('room-updated', { roomId, memberCount: members.length });
     });
 
     // ── Messaging ──
