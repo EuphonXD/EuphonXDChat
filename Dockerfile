@@ -6,6 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY server.js ./
 COPY src/ ./src/
+COPY server/ ./server/
 COPY .env ./
 
 # Install backend dependencies
